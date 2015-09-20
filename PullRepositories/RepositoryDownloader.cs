@@ -7,11 +7,22 @@ namespace PullRepositories
     internal class RepositoryDownloader
     {
         internal void CloneRepository(RepositoryToPull entry) {
-            var gitUrl = MakeGitPullUrl(entry.Url);
-            var pwd = new DirectoryInfo(".");
+            var pwd = new DirectoryInfo(AppSettings.DestPath);
+            if (!pwd.Exists) {
+                pwd.Create();
+            }
             using (var tempFolder = new TemporaryFolder()) {
-                var git = new GitLauncher(gitUrl, tempFolder);
+                var git = new GitLauncher(entry.HttpUrl, tempFolder);
                 git.RunCloneToCompletion();
+                if (git.ExitCode != 0) {
+                    Console.WriteLine("Failed to download {0} on HTTP, trying SSH", entry.HttpUrl);
+                    git = new GitLauncher(entry.SshUrl, tempFolder);
+                    git.RunCloneToCompletion();
+                }
+                if (git.ExitCode == 0) {
+                    Console.WriteLine("Succeeded downloading");
+                    Console.WriteLine("Moving to {0}", pwd);
+                }
                 MoveResult(entry.UserName, tempFolder, pwd);
             }
         }
@@ -21,13 +32,6 @@ namespace PullRepositories
             var userName = unformattedUserName.Replace(" ", "_").Replace(":", " ").Replace("-", "_");
             var destPath = Path.Combine(pwd.FullName, userName);
             Directory.Move(childFolder.FullName, destPath);
-        }
-
-        private static string MakeGitPullUrl(string uri) {
-            if (!uri.EndsWith(".git", StringComparison.CurrentCultureIgnoreCase)) {
-                return uri + ".git";
-            }
-            return uri;
         }
     }
 }

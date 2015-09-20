@@ -5,10 +5,12 @@ namespace PullRepositories {
     internal class GitLauncher {
         private readonly string _url;
         private readonly TemporaryFolder _tempFolder;
+        public int ExitCode;
 
         public GitLauncher(string url, TemporaryFolder tempFolder) {
             _url = url;
             _tempFolder = tempFolder;
+            ExitCode = 0;
         }
 
         public void RunCloneToCompletion() {
@@ -31,6 +33,7 @@ namespace PullRepositories {
                         while (!proc.HasExited) {
                             proc.Refresh();
                         }
+                        ExitCode = proc.ExitCode;
                     }
                 }
             }
