@@ -1,0 +1,8 @@
+syntax: glob
+bin/**
+obj/**
+*.user
+*.suo
+TransVoice.exe
+TransVoice.pdb
+
